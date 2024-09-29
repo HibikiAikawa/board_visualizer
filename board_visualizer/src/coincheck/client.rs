@@ -3,9 +3,10 @@ use futures_util::stream::StreamExt;
 use tokio::sync::mpsc;
 use futures::SinkExt;
 
-use crate::coincheck::coincheck_structs::{Msg, WebsocketBoardData, CoincheckBoard};
+mod structs;
+use structs::{Msg, WebsocketBoardData, CoincheckBoard};
 
-use structs::structs::BoardUnit;
+use super::super::structs::{BoardUnit, Board};
 
 const WEBSOCKET_ROOT_URL: &str = "wss://ws-api.coincheck.com/";
 
