@@ -1,7 +1,9 @@
 mod coincheck;
 mod structs;
 
+const MAX_BOARD_SIZE: usize = 10;
+
 #[tokio::main]
 async fn main() {
-    coincheck::client::run().await;
+    coincheck::client::run(MAX_BOARD_SIZE).await;
 }
