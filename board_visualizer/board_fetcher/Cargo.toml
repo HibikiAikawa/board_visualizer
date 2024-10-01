@@ -1,10 +1,15 @@
 [package]
-name = "board_visualizer"
+name = "board_fetcher"
 version = "0.1.0"
 edition = "2021"
-default-run = "board_visualizer"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "board_fetcher"
+crate-type = ["cdylib"]
 
 [dependencies]
+pyo3 = "0.20.0"
 tokio-tungstenite = { version = "0.*", features = ["rustls-tls"] }
 futures = "*"
 futures-util = "*"
@@ -20,3 +25,4 @@ hyper = "1.*"
 url = "2.*"
 log = "0.*"
 simplelog = "0.*"
+pyo3-asyncio = { version = "0.20", features = ["attributes", "tokio-runtime"] }
