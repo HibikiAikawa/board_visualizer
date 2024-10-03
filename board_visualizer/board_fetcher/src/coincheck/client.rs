@@ -26,8 +26,14 @@ pub async fn run(max_board_size: usize) {
     let msg_str = serde_json::to_string(&msg).unwrap();
     write.send(Message::Text(msg_str)).await.unwrap();
     
+    // 板情報
     let mut asks: Vec<BoardUnit> = Vec::new();
     let mut bids: Vec<BoardUnit> = Vec::new();
+
+    // 保存用ベクター
+    let mut board_vec: Vec<Board> = Vec::new();
+    let save_length = 10000;
+
     while let Some(message) = read.next().await {
         match message.unwrap() {
             Message::Close(_) => break,
@@ -39,19 +45,45 @@ pub async fn run(max_board_size: usize) {
                 // 板情報をアップデート
                 update(&mut asks, &asks_diff, max_board_size, true);
                 update(&mut bids, &bids_diff, max_board_size, false);
+
+                // 板情報をmax_board_sizeに切り詰め
+                let asks_truncated: Vec<BoardUnit> = if asks.len() > max_board_size {
+                    let mut asks_clone = asks.clone();
+                    asks_clone.truncate(max_board_size);
+                    asks_clone
+                } else {
+                    asks.clone()
+                };
+                let bids_truncated: Vec<BoardUnit> = if bids.len() > max_board_size {
+                    let mut bids_clone = bids.clone();
+                    bids_clone.truncate(max_board_size);
+                    bids_clone
+                } else {
+                    bids.clone()
+                };
                 // 板情報を構造体に変換
                 let board: Board = Board{
                     exchange: Exchange::Coincheck,
                     pair: Pair::BtcJpy,
                     instrument: Instrument::Spot,
-                    asks: asks.clone(),
-                    bids: bids.clone(),
+                    asks: asks_truncated,
+                    bids: bids_truncated,
                     broadcast_timestamp: data.board.last_update_at,
                     processing_timestamp: chrono::Local::now().to_rfc3339(),
                 };
 
-                // boardをyield
-                println!("{:?}", board);
+                // println!("{:?}", board);
+                // 板情報を保存
+                board_vec.push(board);
+                println!("length: {}", board_vec.len());
+
+                if board_vec.len() > save_length - 1 {
+                    // Boardをjson形式で保存
+                    let board_json = serde_json::to_string(&board_vec).unwrap();
+                    std::fs::write("../data/sample/coincheck_board.json", board_json).unwrap();
+                    break;
+                }
+                
             }, 
             _ => (),
         }
@@ -95,7 +127,6 @@ fn update(board: &mut Vec<BoardUnit>, board_diff: &Vec<BoardUnit>, max_board_siz
     } else {
         board.sort_by(|a: &BoardUnit, b: &BoardUnit| b.price.partial_cmp(&a.price).unwrap()); //　降順
     }
-    if board.len() > max_board_size { board.truncate(max_board_size); }
 }
 
 // fn create_new_board(board: &Board) -> (Vec<[f32; 2]>, Vec<[f32; 2]>) {
@@ -111,6 +142,6 @@ fn update(board: &mut Vec<BoardUnit>, board_diff: &Vec<BoardUnit>, max_board_siz
 #[tokio::main]
 async fn main() {
     // let (tx, mut rx) = mpsc::channel(100);
-    run(10).await;
+    run(20).await;
     // test();
 }
