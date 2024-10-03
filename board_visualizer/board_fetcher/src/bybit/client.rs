@@ -1,5 +1,3 @@
-// TODO
-// Tradeがパースできない
 use std::fs::File;
 use std::io::Result;
 
@@ -34,7 +32,7 @@ pub async fn run(max_board_size: usize) {
     };
     
     let msg_str = serde_json::to_string(&msg).unwrap();
-    // write.send(Message::Text(msg_str)).await.unwrap();
+    write.send(Message::Text(msg_str)).await.unwrap();
 
     // TRADE
     let msg = structs::Msg {
@@ -56,15 +54,16 @@ pub async fn run(max_board_size: usize) {
     // 保存用ベクター
     let mut board_vec: Vec<Board> = Vec::new();
     let mut trade_vec: Vec<structs::BybitTradeData> = Vec::new();
-    let save_length = 100;
+    let save_length = 200;
 
     while let Some(message) = read.next().await {
         match message.unwrap() {
             Message::Close(_) => break,
             Message::Ping(ping) => write.send(Message::Pong(ping)).await.unwrap(),
             Message::Text(text) => {
-                let board = serde_json::from_str::<structs::WebsocketData<structs::BybitOrderbookData>>(&text);
-                let trade = serde_json::from_str::<structs::WebsocketData<Vec<structs::BybitTradeData>>>(&text);
+                println!("{}", text);
+                let board = serde_json::from_str::<structs::WebsocketOrderBookData>(&text);
+                let trade = serde_json::from_str::<structs::WebsocketTradeData>(&text);
                 match board {
                     Ok(data) => {
                         let _type =  data.r#type;
@@ -132,7 +131,7 @@ pub async fn run(max_board_size: usize) {
                         println!("{:?}", data);
                         let trades = data.data;
                         // 取引情報を保存
-                        // trade_vec.extend(trades);
+                        trade_vec.extend(trades);
                     },
                     Err(_) => {}
                 }

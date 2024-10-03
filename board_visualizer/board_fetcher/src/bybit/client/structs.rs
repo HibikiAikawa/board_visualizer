@@ -9,16 +9,23 @@ pub struct Msg {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct WebsocketData<T> {
+pub struct WebsocketOrderBookData {
     pub topic: String,
     pub r#type: String,
     pub ts: u64,
-    pub data: T,
+    pub data: BybitOrderbookData,
     pub cts: u64,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct WebsocketTradeData {
+    pub topic: String,
+    pub r#type: String,
+    pub ts: u64,
+    pub data: Vec<BybitTradeData>,
+}
 
-// "data":{"s":"BTCUSDT","b":[],"a":[["61209.90","0.048"],["61210.50","0.233"]],"u":197813013,"seq":247020537201},
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BybitOrderbookData {
     pub s: String,
