@@ -36,14 +36,19 @@ impl fmt::Debug for Board {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Exchange {
     Coincheck,
+    Hyperliquid,
+    Bybit
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Pair {
-    BtcJpy
+    BtcJpy,
+    BtcUsd,
+    BtcUsdt
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Instrument {
-    Spot
+    Spot,
+    Perp
 }

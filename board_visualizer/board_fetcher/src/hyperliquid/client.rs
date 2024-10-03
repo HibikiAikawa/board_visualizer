@@ -50,6 +50,7 @@ pub async fn run(max_board_size: usize) {
     write.send(Message::Text(msg_str)).await.unwrap();
 
     // 板情報
+    // MEMO データにはnumber of order項目もあったけど一旦無視
     let mut asks: Vec<BoardUnit> = Vec::new();
     let mut bids: Vec<BoardUnit> = Vec::new();
 
@@ -80,9 +81,9 @@ pub async fn run(max_board_size: usize) {
 
                         // 板情報を構造体に変換
                         let board: Board = Board{
-                            exchange: Exchange::Coincheck,
-                            pair: Pair::BtcJpy,
-                            instrument: Instrument::Spot,
+                            exchange: Exchange::Hyperliquid,
+                            pair: Pair::BtcUsdt,
+                            instrument: Instrument::Perp,
                             asks: asks,
                             bids: bids,
                             broadcast_timestamp: data.data.time.to_string(),
