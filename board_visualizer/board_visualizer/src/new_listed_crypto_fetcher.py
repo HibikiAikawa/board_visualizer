@@ -62,6 +62,7 @@ def watch_new_listed_coin(api_url, instrument):
             continue
 
 def main():
+    print("waiting... (new listed coin fetcher)")
     perp_api_url = "https://api.bybit.com/v2/public/symbols"
     spot_api_url = "https://api.bybit.com/spot/v1/symbols"
     multiprocessing.Process(target=watch_new_listed_coin,args=(perp_api_url, "perp")).start()
