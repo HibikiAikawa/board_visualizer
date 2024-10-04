@@ -13,37 +13,35 @@ use super::super::structs::{BoardUnit, Board, Exchange, Pair, Instrument};
 
 
 // SPOT, PERP, OPTION, INVERSEでURLが違う
-const WEBSOCKET_ROOT_URL: &str = "wss://stream.bybit.com/v5/public/linear";
+const WEBSOCKET_BASE_URL: &str = "wss://stream.bybit.com/v5/public";
 
-pub async fn run(max_board_size: usize) { 
-    let (ws_stream, _) = connect_async(WEBSOCKET_ROOT_URL)
+pub async fn fetch(max_board_size: usize, save_time_min: i64, symbol: String, instrument: String, dir_path: String) { 
+    println!("fetching bybit data...");
+    println!("symbol: {}, instrument: {}", symbol, instrument);
+    let url = if instrument == "spot" {
+        "/spot"
+    } else if instrument == "perp" {
+        "/linear"
+    } else {
+        panic!("instrument must be spot, perp or futures");
+    };
+
+    let websocket_root_url = WEBSOCKET_BASE_URL.to_string() + url;
+    let (ws_stream, _) = connect_async(websocket_root_url)
         .await
         .expect("Failed to connect");
     let (mut write, mut read) = ws_stream.split();
 
-    // ORDER BOOK
+    // SUBSCRIBE
     let msg = structs::Msg {
         jsonrpc: "2.0".to_string(),
         id: 1,
         op: "subscribe".to_string(),
         args: vec![
-            "orderbook.200.BTCUSDT".to_string()  // データ取得間隔を指定することができるとりあえず100msで取る
+            "orderbook.200.".to_string() + &symbol,  // データ取得間隔を指定することができるとりあえず100msで取る
+            "publicTrade.".to_string() + &symbol,
             ]
     };
-    
-    let msg_str = serde_json::to_string(&msg).unwrap();
-    write.send(Message::Text(msg_str)).await.unwrap();
-
-    // TRADE
-    let msg = structs::Msg {
-        jsonrpc: "2.0".to_string(),
-        id: 1,
-        op: "subscribe".to_string(),
-        args: vec![
-            "publicTrade.BTCUSDT".to_string()
-            ]
-    };
-    
     let msg_str = serde_json::to_string(&msg).unwrap();
     write.send(Message::Text(msg_str)).await.unwrap();
     
@@ -54,14 +52,14 @@ pub async fn run(max_board_size: usize) {
     // 保存用ベクター
     let mut board_vec: Vec<Board> = Vec::new();
     let mut trade_vec: Vec<structs::BybitTradeData> = Vec::new();
-    let save_length = 200;
+
+    let start_time = chrono::Local::now();
 
     while let Some(message) = read.next().await {
         match message.unwrap() {
             Message::Close(_) => break,
             Message::Ping(ping) => write.send(Message::Pong(ping)).await.unwrap(),
             Message::Text(text) => {
-                println!("{}", text);
                 let board = serde_json::from_str::<structs::WebsocketOrderBookData>(&text);
                 let trade = serde_json::from_str::<structs::WebsocketTradeData>(&text);
                 match board {
@@ -112,14 +110,19 @@ pub async fn run(max_board_size: usize) {
 
                         // 板情報を保存
                         board_vec.push(board);
-                        println!("length: {}", board_vec.len());
-
-                        if board_vec.len() > save_length - 1 {
+                        
+                        // save_time_min分以上経過していたら保存
+                        if (chrono::Local::now() - start_time).num_minutes() > save_time_min {
+                            println!("saving data...");
+                            // path名
+                            // TODO /をdir_pathに含めるとエラーになるので注意.　いつか対策する
+                            let board_path = dir_path.clone() + "/board_" + &symbol + "_" + &instrument + ".json";
+                            let trade_path = dir_path.clone() + "/trade_" + &symbol + "_" + &instrument + ".json";
                             // Boardをjson形式で保存
                             let board_json = serde_json::to_string(&board_vec).unwrap();
-                            std::fs::write("../data/sample/bybit_board.json", board_json).unwrap();
+                            std::fs::write(board_path, board_json).unwrap();
                             // Tradeをjson形式で保存
-                            save_trade(trade_vec, "../data/sample/bybit_trade.json".to_string()).unwrap();
+                            save_trade(trade_vec, trade_path.to_string()).unwrap();
                             break;
                         }
                     }
@@ -128,7 +131,6 @@ pub async fn run(max_board_size: usize) {
 
                 match trade {
                     Ok(data) => {
-                        println!("{:?}", data);
                         let trades = data.data;
                         // 取引情報を保存
                         trade_vec.extend(trades);
@@ -190,6 +192,6 @@ fn save_trade(trades: Vec<structs::BybitTradeData>, path: String) -> Result<()> 
 #[tokio::main]
 async fn main() {
     // let (tx, mut rx) = mpsc::channel(100);
-    run(20).await;
+    // run(20).await;
     // test();
 }

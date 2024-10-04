@@ -1,6 +1,6 @@
 use pyo3::{prelude::*, wrap_pyfunction};
 
-mod coincheck;
+mod bybit;
 mod structs;
 
 #[pyfunction]
@@ -11,17 +11,23 @@ fn rust_sleep(py: Python) -> PyResult<&PyAny> {
     })
 }
 
-// TODO 引数はどうやって入れる？
 #[pyfunction]
-fn run_coincheck(py: Python, max_board_size: usize) -> PyResult<&PyAny> {
+fn bybit_live_fetcher(
+    py: Python,
+    max_board_size: usize,
+    save_time_min: i64,
+    symbol: String,
+    instrument: String,
+    dir_path: String
+) -> PyResult<&PyAny> {
     pyo3_asyncio::tokio::future_into_py(py, async move {
-        coincheck::client::run(max_board_size).await;
+        bybit::client::fetch(max_board_size, save_time_min, symbol, instrument, dir_path).await;
         Ok(())
     })
 }
 #[pymodule]
 fn board_fetcher(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(rust_sleep, m)?)?;
-    m.add_function(wrap_pyfunction!(run_coincheck, m)?)?;
+    m.add_function(wrap_pyfunction!(bybit_live_fetcher, m)?)?;
     Ok(())
 }
