@@ -22,7 +22,7 @@ pub async fn run(max_board_size: usize) {
     // ORDER_BOOK
     let wsbook = structs::SubscribeMessage {
         r#type: "l2Book".to_string(),
-        coin: "BTC".to_string(),
+        coin: "PURR/USDC".to_string(),
     };
 
     let msg = structs::Msg::<structs::SubscribeMessage> {
@@ -37,7 +37,7 @@ pub async fn run(max_board_size: usize) {
     // TRADE
     let wsbook = structs::SubscribeMessage {
         r#type: "trades".to_string(),
-        coin: "BTC".to_string(),
+        coin: "PURR/USDC".to_string(),
     };
 
     let msg = structs::Msg {
@@ -57,7 +57,7 @@ pub async fn run(max_board_size: usize) {
     // 保存用ベクター
     let mut board_vec: Vec<Board> = Vec::new();
     let mut trade_vec: Vec<structs::WsTrade> = Vec::new();
-    let save_length = 50;
+    let save_length = 10000;
 
     while let Some(message) = read.next().await {
         match message.unwrap() {
@@ -82,8 +82,8 @@ pub async fn run(max_board_size: usize) {
                         // 板情報を構造体に変換
                         let board: Board = Board{
                             exchange: Exchange::Hyperliquid,
-                            pair: Pair::BtcUsdt,
-                            instrument: Instrument::Perp,
+                            pair: Pair::PurrUsdc,
+                            instrument: Instrument::Spot,
                             asks: asks,
                             bids: bids,
                             broadcast_timestamp: data.data.time.to_string(),

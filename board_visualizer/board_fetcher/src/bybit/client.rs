@@ -101,8 +101,8 @@ pub async fn run(max_board_size: usize) {
 
                         // Board構造体に変換
                         let board: Board = Board{
-                            exchange: Exchange::Coincheck,
-                            pair: Pair::BtcJpy,
+                            exchange: Exchange::Bybit,
+                            pair: Pair::BtcUsdt,
                             instrument: Instrument::Spot,
                             asks: asks_truncated,
                             bids: bids_truncated,

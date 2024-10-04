@@ -44,7 +44,8 @@ pub enum Exchange {
 pub enum Pair {
     BtcJpy,
     BtcUsd,
-    BtcUsdt
+    BtcUsdt,
+    PurrUsdc
 }
 
 #[derive(Serialize, Deserialize, Debug)]
