@@ -11,7 +11,7 @@ MAX_BOARD_SIZE = 20
 SAVE_TIME_MIN = 60
 DIR_PATH = "/work/board_visualizer/data/bybit"
 
-SLEEP_TIME = 30
+SLEEP_TIME = 60
 
 # 前回の上場リストと比較して新規上場コインを抽出
 def extract_new_listed_coin(symbol_list, prev_symbol_list) -> list[str]:
@@ -46,6 +46,8 @@ def watch_new_listed_coin(api_url, instrument):
         try:
             time.sleep(SLEEP_TIME)
             listed_coins = requests.get(api_url).json()["result"]
+            if len(listed_coins) == 0:
+                continue
             new_names = extract_new_listed_coin(listed_coins, prev_listed_coins)
             
             if len(new_names) > 0:

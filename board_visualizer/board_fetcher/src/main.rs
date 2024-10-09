@@ -14,7 +14,7 @@ async fn main() {
     // bybit::client::run(MAX_BOARD_SIZE).await;
     let max_board_size = 10;
     let save_time_min = 1;
-    let symbol = "BTCUSDT".to_string();
+    let symbol = "10000WHYUSDT".to_string();
     let instrument = "perp".to_string();
     let dir_path = ".".to_string();
     bybit::client::fetch(max_board_size, save_time_min, symbol, instrument, dir_path).await;
