@@ -11,7 +11,7 @@ use super::super::structs::{BoardUnit, Board, Exchange, Pair, Instrument};
 
 const WEBSOCKET_ROOT_URL: &str = "wss://ws-api.coincheck.com/";
 
-pub async fn run(max_board_size: usize) { 
+async fn run_websocket(max_board_size: usize, tx: mpsc::Sender<Board>) { 
     let (ws_stream, _) = connect_async(WEBSOCKET_ROOT_URL)
         .await
         .expect("Failed to connect");
@@ -29,10 +29,6 @@ pub async fn run(max_board_size: usize) {
     // 板情報
     let mut asks: Vec<BoardUnit> = Vec::new();
     let mut bids: Vec<BoardUnit> = Vec::new();
-
-    // 保存用ベクター
-    let mut board_vec: Vec<Board> = Vec::new();
-    let save_length = 10000;
 
     while let Some(message) = read.next().await {
         match message.unwrap() {
@@ -72,24 +68,13 @@ pub async fn run(max_board_size: usize) {
                     processing_timestamp: chrono::Local::now().to_rfc3339(),
                 };
 
-                // println!("{:?}", board);
-                // 板情報を保存
-                board_vec.push(board);
-                println!("length: {}", board_vec.len());
-
-                if board_vec.len() > save_length - 1 {
-                    // Boardをjson形式で保存
-                    let board_json = serde_json::to_string(&board_vec).unwrap();
-                    std::fs::write("../data/sample/coincheck_board.json", board_json).unwrap();
-                    break;
-                }
-                
+                // 板情報を送信
+                tx.send(board).await.unwrap();
             }, 
             _ => (),
         }
     }
 }
-
 
 // コインチェックの板情報を前処理して板情報差分に変換
 // ソートはしない
@@ -129,19 +114,9 @@ fn update(board: &mut Vec<BoardUnit>, board_diff: &Vec<BoardUnit>, max_board_siz
     }
 }
 
-// fn create_new_board(board: &Board) -> (Vec<[f32; 2]>, Vec<[f32; 2]>) {
-//     let mut  board_bid: Vec<[f32;2]> = Vec::new();
-//     let mut  board_ask: Vec<[f32;2]> = Vec::new();
-//     for board_unit in &board.bids {board_bid.push([board_unit.price, board_unit.size]);}
-//     for board_unit in &board.asks {board_ask.push([board_unit.price, board_unit.size]);}
-//     board_ask.sort_by(|a: &[f32; 2], b| a[0].partial_cmp(&b[0]).unwrap()); // 昇順
-//     board_bid.sort_by(|a, b| a[0].partial_cmp(&b[0]).unwrap()); // 降順
-//     (board_ask, board_bid)
-// }
 
-#[tokio::main]
-async fn main() {
-    // let (tx, mut rx) = mpsc::channel(100);
-    run(20).await;
-    // test();
+pub fn run(max_board_size: usize) -> mpsc::Receiver<Board> {
+    let (tx, rx) = mpsc::channel(100);
+    tokio::spawn(run_websocket(max_board_size, tx));
+    rx
 }

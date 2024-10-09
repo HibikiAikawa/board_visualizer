@@ -3,3 +3,8 @@ board_visualizer/privacy
 board_visualizer/board_visualizer/notebooks
 # MEMO to change directory
 google-cloud-sdk/*
+
+
+# Added by cargo
+
+/target
